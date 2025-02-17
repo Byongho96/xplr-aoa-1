@@ -9,12 +9,12 @@ class WebsocketServer:
         self.clients = set()
         self.server = None
 
-    async def _handler(self, websocket, path):
+    async def _handler(self, websocket):
         self.clients.add(websocket)
         try:
             async for message in websocket:
                 if self.message_handler:
-                    await self.message_handler(websocket, message)
+                    self.message_handler(websocket, message)
         except websockets.ConnectionClosed:
             print("Client disconnected")
         finally:
