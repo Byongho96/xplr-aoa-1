@@ -29,7 +29,7 @@ def serial_handler(bytes: bytes):
 
     if (data[0] == b"+UUDF"):
         info = data[1].split(b",")
-        azimuth = float(-info[2])
+        azimuth = -float(info[2])
         elevation = float(info[3])    
         board["angle"] = (elevation, azimuth)
 
@@ -41,7 +41,7 @@ async def run_client(interval: float):
     reader = SerialReader(COM_PORT, BAUD_RATE, callback=serial_handler)
     reader.start()
     
-    ws = WebsocketClient(f'ws://{SOCKET_IP}:{SOCKET_PORT}')
+    ws = WebsocketClient(f'wss://{SOCKET_IP}')
     await ws.connect()
     
     while True:
