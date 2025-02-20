@@ -84,10 +84,11 @@ class Triangulator:
 
             P_world = np.array(pos)
 
-            r_x, r_y, r_z = rot
+            r_x, r_y, r_z = map(np.deg2rad, rot)
+
             R_local = cls.get_rotation_matrix_from_euler(r_x, r_y, r_z)
 
-            elevation, azimuth = ang
+            elevation, azimuth = map(np.deg2rad, ang)
             D_local = cls.get_direction_vector_from_angles(elevation, azimuth)
             
             # Get unit direction vector in world coordinate system
@@ -128,23 +129,23 @@ if __name__ == "__main__":
     boards = [
         {
             "position": (0, 0, 0),
-            "rotation": (0, np.deg2rad(90), 0),
-            "angle": (np.deg2rad(45), np.deg2rad(0))
+            "rotation": (0, 45, 0),
+            "angle": (45, 0)
         },
         {
             "position": (1, 0, 0),
-            "rotation": (0, np.deg2rad(-90), 0),
-            "angle": (np.deg2rad(45), np.deg2rad(0))
+            "rotation": (0, -45, 0),
+            "angle": (45, 0)
+        },
+        {
+            "position": (0, 0, 1),
+            "rotation": (0, 135, 0),
+            "angle": (45, 0)
         },
         {
             "position": (1, 0, 1),
-            "rotation": (0, np.deg2rad(-90), 0),
-            "angle": (np.deg2rad(45), np.deg2rad(0))
-        },
-        {
-            "position": (0, 0, 0),
-            "rotation": (0, np.deg2rad(90), 0),
-            "angle": (np.deg2rad(45), np.deg2rad(0))
+            "rotation": (0, -135, 0),
+            "angle": (45, 0)
         }
     ]
 
