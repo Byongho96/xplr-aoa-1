@@ -3,9 +3,12 @@
 This project reads AoA values from multiple C211 anchors, transmits them to a server via WebSocket, and tracks real-time positions using a simple LMS linear algebra algorithm.
 
 ## Output Data
-- The result follows the Right-hand Cartesian coordinate system.  
-- See the diagram for reference.  
 - This is a basic implementation and does not consider sensor or system noise, so errors may be significant.
+- The result follows the Right-hand Cartesian coordinate system.  
+
+<p align="center">
+<img src="./3D_coordinate_system.svg" alt="3D Coordinate System" width="400"/>
+</p>
 
 ## Environment Variables
 
