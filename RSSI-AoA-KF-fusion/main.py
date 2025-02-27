@@ -2,7 +2,7 @@ import calibration
 
 def main() -> None:    
     """
-    Calculate coefficients for the RSSI model for each anchor and plot the results.
+    Calculate RSSI path-loss coefficients for each anchor.
     """
     calibration.run()
 
