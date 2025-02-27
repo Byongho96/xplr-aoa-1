@@ -1,6 +1,6 @@
 # Overview
 
-This project refactors the Python code from the [corresponding paper](https://ieeexplore.ieee.org/abstract/document/10843768) while studying it. The original Python code can be found [here](https://zenodo.org/records/14078963).
+This project refactors the Python code from the [corresponding paper](https://ieeexplore.ieee.org/abstract/document/10843768) while studying Kalman Filter Code Implementation. The original Python code can be found [here](https://zenodo.org/records/14078963).
 
 The dataset used in this project was downloaded from the [corresponding paper](https://ieeexplore.ieee.org/document/10201845/references#references) at [Zenodo](https://zenodo.org/records/7759557).
 

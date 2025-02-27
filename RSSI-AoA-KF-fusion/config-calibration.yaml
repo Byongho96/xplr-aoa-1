@@ -4,11 +4,10 @@ file_paths:
   gt: 'data/calibration/gt/gt_calibration.txt'
 
 # This section defines the parameters for each anchor
-# Distance in centimeters
 # Do not change the anchors ID names
 anchors:
   - id: 6501
-    coordinates: [0, 300, 230] # Anchor 6501 coordinates
+    coordinates: [0, 300, 230] # Anchor 6501 coordinates - in centimeters
     ref_coordinates: [120, 300, 110] # Reference coordinate for path-loss model - in centimeters
   - id: 6502
     coordinates: [600, 0, 230]

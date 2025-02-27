@@ -1,28 +1,66 @@
 # This section defines the dataset file path
 file_paths:
-  calibration:
-    beacons: 'data/calibration/beacons/beacons_calibration.txt'
-    gt: 'data/calibration/gt/gt_calibration.txt'
+  case_1:
+    run1:
+      beacons: 'data/mobility/beacons/use-case 1/beacons_mobility_use-case1_run1.txt'
+      gt: 'data/mobility/gt/use-case 1/gt_mobility_use-case1_run1.txt'
+    run2:
+      beacons: 'data/mobility/beacons/use-case 1/beacons_mobility_use-case1_run2.txt'
+      gt: 'data/mobility/gt/use-case 1/gt_mobility_use-case1_run2.txt'
+    run3:
+      beacons: 'data/mobility/beacons/use-case 1/beacons_mobility_use-case1_run3.txt'
+      gt: 'data/mobility/gt/use-case 1/gt_mobility_use-case1_run3.txt'
+    run4:
+      beacons: 'data/mobility/beacons/use-case 1/beacons_mobility_use-case1_run4.txt'
+      gt: 'data/mobility/gt/use-case 1/gt_mobility_use-case1_run4.txt'
+
+  case_2:
+    run1:
+      beacons: 'data/mobility/beacons/use-case 2/beacons_mobility_use-case2_run1.txt'
+      gt: 'data/mobility/gt/use-case 2/gt_mobility_use-case2_run1.txt'
+    run2:
+      beacons: 'data/mobility/beacons/use-case 2/beacons_mobility_use-case2_run2.txt'
+      gt: 'data/mobility/gt/use-case 2/gt_mobility_use-case2_run2.txt'
+    run3:
+      beacons: 'data/mobility/beacons/use-case 2/beacons_mobility_use-case2_run3.txt'
+      gt: 'data/mobility/gt/use-case 2/gt_mobility_use-case2_run3.txt'
+    run4:
+      beacons: 'data/mobility/beacons/use-case 2/beacons_mobility_use-case2_run4.txt'
+      gt: 'data/mobility/gt/use-case 2/gt_mobility_use-case2_run4.txt'
+
+  case_3:
+    run1:
+      beacons: 'data/mobility/beacons/use-case 3/beacons_mobility_use-case3_run1.txt'
+      gt: 'data/mobility/gt/use-case 3/gt_mobility_use-case3_run1.txt'
+    run2:
+      beacons: 'data/mobility/beacons/use-case 3/beacons_mobility_use-case3_run2.txt'
+      gt: 'data/mobility/gt/use-case 3/gt_mobility_use-case3_run2.txt'
+    run3:
+      beacons: 'data/mobility/beacons/use-case 3/beacons_mobility_use-case3_run3.txt'
+      gt: 'data/mobility/gt/use-case 3/gt_mobility_use-case3_run3.txt'
+    run4:
+      beacons: 'data/mobility/beacons/use-case 3/beacons_mobility_use-case3_run4.txt'
+      gt: 'data/mobility/gt/use-case 3/gt_mobility_use-case3_run4.txt'
 
 # This section defines the parameters for each anchor
 # Do not change the anchors ID names
 anchors:
-  - id: a6501
-    coordinates: [0, 300, 230] # Anchor 6501 coordinates - in centimeters
+  - id: 6501
     alpha: 1.329 # Path-loss coefficent
-    ref_coordinates: [120, 300, 110] # Reference coordinate - in centimeters
-  - id: a6502
-    coordinates: [600, 0, 230] # Anchor 6502 coordinates - in centimeters
-    alpha: 1.852 # Path-loss coefficent
-    ref_coordinates: [600, 120, 110] # Reference coordinate - in centimeters
-  - id: a6503
-    coordinates: [1200, 300, 230] # Anchor 6503 coordinates - in centimeters
-    alpha: 1.420 # Path-loss coefficent
-    ref_coordinates: [1080, 300, 110] # Reference coordinate - in centimeters
-  - id: a6504
-    coordinates: [600, 600, 230] # Anchor 6504 coordinates - in centimeters
-    alpha: 2.012 # Path-loss coefficent
-    ref_coordinates: [600, 480, 110] # Reference coordinate - in centimeters
+    coordinates: [0, 300, 230] # Anchor 6501 coordinates - in centimeters
+    ref_coordinates: [120, 300, 110] # Reference coordinate for path-loss model
+  - id: 6502
+    alpha: 1.852
+    coordinates: [600, 0, 230]
+    ref_coordinates: [600, 120, 110]
+  - id: 6503
+    alpha: 1.420
+    coordinates: [1200, 300, 230]
+    ref_coordinates: [1080, 300, 110]
+  - id: 6504
+    alpha: 2.012
+    coordinates: [600, 600, 230]
+    ref_coordinates: [600, 480, 110]
 
 # This section defines Kalman filter parameters
 kalman_filter:
@@ -34,26 +72,16 @@ kalman_filter:
   R_AoA_RSSI: [[250, 0], [0, 250]] # AoA+RSSI Measurement Noise
   R_AoA_only: [[25, 0], [0, 25]] # AoA-only Measurement Noise
   P: [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]] #Initial Error Covariance
-  case1_initial_pos: [240, 480] # Initial position coordinate for Case 1
-  case2_initial_pos: [960, 120] # Initial position coordinate for Case 2
-  case3_initial_pos: [240, 480] # Initial position coordinate for Case 3
-
-# This section defines configuration settings for calibration scenarios
-calibration:
-  begin_X: 120 # Starting position of the calibration points on the X-axis, in centimeters
-  end_X: 1080 # Final position of the calibration points on the X-axis, in centimeters
-  begin_Y: 120 # Starting position of the calibration points on the Y-axis, in centimeters
-  end_Y: 480 # Final position of the calibration points on the Y-axis, in centimeters
-  Z_score: 2 # Z-score threshold to remove RSSI outliers
 
 # This section configures additional resources
 additional:
-  x_grid_limit: [-2.00, 8.00] # X-axis grid limit for plots, in meters
-  y_grid_limit: [-2.00, 14.00] # Y-axis grid limit for plots, in meters
   plot_first_path: True # Change this value if you want to plot the estimated path generated by the algorithms only during the first run.
   plot_all_paths: False # Change this value if you want to plot the estimated path generated by the algorithms in every run.
-  plot_first_RSSI: True # Change this value if you want to plot the RSSI curve in the calibration code for only the 6501 anchor.
-  plot_all_RSSI: False # Change this value if you want to plot the RSSI curve in the calibration code for all anchors.
   plot_error_bargraph: True # Change this value if you want to plot the bar graph with the average distance errors.
   plot_CDF: True # Change this value if you want to plot the CDF of the average distance error.
-  polarization: 2ndP # The polarization used – If you want to see the RSSI behavior with a different polarization, change it to '1stP'.
+  case_1:
+    initial_position: [240, 480] # in centimeters
+  case_2:
+    initial_position: [960, 120] # in centimeters
+  case_3:
+    initial_position: [240, 480] # in centimeters

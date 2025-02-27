@@ -11,7 +11,7 @@ gt_column_names = ["StartTime", "EndTime", "Xcoord","Ycoord"]
 def run():
     print('Start Calibration Process')
     
-    # Open Configrations File
+    # Open Configuration File
     with open("config-calibration.yaml", "r") as file:
         config = yaml.safe_load(file)
     
