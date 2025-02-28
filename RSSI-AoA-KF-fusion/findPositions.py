@@ -29,7 +29,6 @@ def multilateration(config, mean_data):
 
     df_MLT = pd.DataFrame(columns=['Xreal', 'Yreal', 'Xest', 'Yest']) #Dataframe to save the results
     
-    print(mean_data[6501].head())
     for i in range (len(mean_data[6501])): #loop through measurements
        
         #Distance with RSSI between anchors and tag
@@ -100,10 +99,9 @@ def multilateration(config, mean_data):
 def trigonometry(mean_data, config, df_posMLT):
     
     anchors_coordinates = {}
-    for anchor in config['anchors']: # getting the data for each anchors
+    for anchor in config['anchors']:
         anchor_id = anchor['id']
-        x, y, z = anchor['coordinates']  # get coordinates
-        xr, xy, zr = anchor['ref_coordinates']  # get references coordinates
+        x, y, z = anchor['coordinates']
         anchors_coordinates[anchor_id] = {
             'x': x,
             'y': y,
@@ -117,21 +115,21 @@ def trigonometry(mean_data, config, df_posMLT):
     posTrigonometry = {anchor_id: {'x': [], 'y': []} for anchor_id in [6501, 6502, 6503, 6504]} #dict to save the result of each anchor
     for anchor_id in [6501, 6502, 6503, 6504]:
         # Calculate the distance from anchors to the position obtained by multilateration
-        mean_data[f'{anchor_id}']['Dest_MLT'] = np.sqrt((df_posMLT["Xest"] - anchors_coordinates[f'{anchor_id}']['x'])**2 + (df_posMLT["Yest"] - anchors_coordinates[f'{anchor_id}']['y'])**2 + (anchors_coordinates[f'{anchor_id}']['ref_coordinates'][2] - anchors_coordinates[f'{anchor_id}']['z'])**2)
+        mean_data[anchor_id]['Dest_MLT'] = np.sqrt((df_posMLT["Xest"] - anchors_coordinates[anchor_id]['x'])**2 + (df_posMLT["Yest"] - anchors_coordinates[anchor_id]['y'])**2 + (anchors_coordinates[anchor_id]['ref_coordinates'][2] - anchors_coordinates[anchor_id]['z'])**2)
 
         # iven the orientation of each anchor, each calculation requires a different equation, as each must be determined with respect to a common reference axis.
         if anchor_id == 6501:
-            Xest = abs(-anchors_coordinates[f'{anchor_id}']['x']+mean_data[f'{anchor_id}']['Dest_MLT']*np.sin((np.deg2rad(90-mean_data[f'{anchor_id}']['Azim']))))
-            Yest = abs(anchors_coordinates[f'{anchor_id}']['y']-mean_data[f'{anchor_id}']['Dest_MLT']*np.cos((np.deg2rad(90-mean_data[f'{anchor_id}']['Azim']))))
+            Xest = abs(-anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90-mean_data[anchor_id]['AoA_el']))))
+            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90-mean_data[anchor_id]['AoA_el']))))
         elif anchor_id == 6502:
-            Xest = abs(anchors_coordinates[f'{anchor_id}']['x']+mean_data[f'{anchor_id}']['Dest_MLT']*np.cos((np.deg2rad(90-mean_data[f'{anchor_id}']['Azim']))))
-            Yest = abs(anchors_coordinates[f'{anchor_id}']['y']-mean_data[f'{anchor_id}']['Dest_MLT']*np.sin((np.deg2rad(90-mean_data[f'{anchor_id}']['Azim']))))
+            Xest = abs(anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90-mean_data[anchor_id]['AoA_el']))))
+            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90-mean_data[anchor_id]['AoA_el']))))
         elif anchor_id == 6503:
-            Xest = abs(-anchors_coordinates[f'{anchor_id}']['x']+mean_data[f'{anchor_id}']['Dest_MLT']*np.sin((np.deg2rad(90+mean_data[f'{anchor_id}']['Azim']))))
-            Yest = abs(anchors_coordinates[f'{anchor_id}']['y']-mean_data[f'{anchor_id}']['Dest_MLT']*np.cos((np.deg2rad(90+mean_data[f'{anchor_id}']['Azim']))))
+            Xest = abs(-anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90+mean_data[anchor_id]['AoA_el']))))
+            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90+mean_data[anchor_id]['AoA_el']))))
         else:
-            Xest = abs(anchors_coordinates[f'{anchor_id}']['x']+mean_data[f'{anchor_id}']['Dest_MLT']*np.cos((np.deg2rad(90+mean_data[f'{anchor_id}']['Azim']))))
-            Yest = abs(anchors_coordinates[f'{anchor_id}']['y']-mean_data[f'{anchor_id}']['Dest_MLT']*np.sin((np.deg2rad(90+mean_data[f'{anchor_id}']['Azim']))))
+            Xest = abs(anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90+mean_data[anchor_id]['AoA_el']))))
+            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90+mean_data[anchor_id]['AoA_el']))))
         
         # Store the Xest and Yest values for each anchor
         posTrigonometry[anchor_id]['x'].append(Xest)
@@ -169,10 +167,9 @@ def trigonometry(mean_data, config, df_posMLT):
 def triangulation(mean_data, config):
     
     anchors_coordinates = {}
-    for anchor in config['anchors']: # getting the data for each anchors
+    for anchor in config['anchors']:
         anchor_id = anchor['id']
-        x, y, z = anchor['coordinates']  # get coordinates
-        xr, xy, zr = anchor['ref_coordinates']  # get references coordinates
+        x, y, z = anchor['coordinates']
         anchors_coordinates[anchor_id] = {
             'x': x,
             'y': y,
@@ -183,18 +180,21 @@ def triangulation(mean_data, config):
     
     df_triangulation = pd.DataFrame(columns=['Xreal', 'Yreal', 'Xest', 'Yest']) # Create dataframe o save the results
     
-    df_triangulation['Xreal'] = mean_data[6501]['Xreal'] # Assign real positions
-    df_triangulation['Yreal'] = mean_data[6501]['Yreal']
+    df_triangulation['Xreal'] = mean_data[6501]['Xcoord'] # Assign real positions
+    df_triangulation['Yreal'] = mean_data[6501]['Ycoord']
     
     for i in range(len(mean_data[6501])): # Loop through measurements
         
-        aoa1 = math.pi - math.radians(mean_data[6501].iloc[i,4]) #azimuth 6501
-        aoa2 = math.pi/2 - math.radians(mean_data[6502].iloc[i,4]) #azimuth 6502
-        aoa3 = math.pi - math.radians(mean_data[6503].iloc[i,4]) #azimuth 6503
-        aoa4 = math.pi/2 - math.radians(mean_data[6504].iloc[i,4]) #azimuth 6504
+        aoa1 = math.pi - math.radians(mean_data[6501].loc[i,'AoA_az']) 
+        aoa2 = math.pi/2 - math.radians(mean_data[6502].loc[i,'AoA_az']) 
+        aoa3 = math.pi - math.radians(mean_data[6503].loc[i,'AoA_az']) 
+        aoa4 = math.pi/2 - math.radians(mean_data[6504].loc[i,'AoA_az'])
         
         '''
         The article by Ottoy and Kupper was used as a reference for calculating the triangulation, using the least squares estimation.
+
+        Y_intercept = Y_a - tan(θ)  * X_a
+        H * T = Y_intercept
         '''
         h11 = -math.tan(aoa1)
         h21 = -math.tan(aoa2)
@@ -205,20 +205,24 @@ def triangulation(mean_data, config):
         h32 = 1
         h42 = 1
 
-        H = np.array([[h11, h12],
-                    [h21, h22],
-                    [h31, h32],
-                    [h41, h42]])
+        H = np.array([
+                [h11, h12],
+                [h21, h22],
+                [h31, h32],
+                [h41, h42]
+            ])
 
         c11 = anchors_coordinates[6501]['y'] - anchors_coordinates[6501]['x']*math.tan(aoa1)
         c21 = anchors_coordinates[6502]['y'] - anchors_coordinates[6502]['x']*math.tan(aoa2)
         c31 = anchors_coordinates[6503]['y'] - anchors_coordinates[6503]['x']*math.tan(aoa3)
         c41 = anchors_coordinates[6504]['y'] - anchors_coordinates[6504]['x']*math.tan(aoa4)
 
-        c = np.array([[c11],
-                    [c21],
-                    [c31],
-                    [c41]])
+        c = np.array([
+                [c11],
+                [c21],
+                [c31],
+                [c41]
+            ])
 
         e = np.linalg.inv(H.transpose().dot(H)).dot(H.transpose()).dot(c) #LS
 
@@ -250,12 +254,68 @@ def kalman_filter(zk, config, initial_position, R):
         P = A @ P @ A.transpose() + Q
         
         #Measurement Update
-        S = C @ P @ C.transpose() + R
-        K = P @ C.transpose() @ np.linalg.inv(S) # Kalman Gain
+        K = P @ C.transpose() @ np.linalg.inv(C @ P @ C.transpose() + R) # Kalman Gain
+        xk[:,i:i+1] = xk[:,i:i+1] + K @ (zk[i:i+1,:].transpose() - C @ xk[:,i:i+1])
+
+        P = P - K @ C @ P
+    
+    xk = xk.transpose()
+    
+    return xk
+
+def kalman_filter_acceleration(zk, config, initial_position, R):
+    
+    #Initialize state vector with initial position
+    xk = np.zeros((6,len(zk))).transpose()
+    xk[0] = [initial_position[0], 0, 0, initial_position[1], 0, 0]
+    xk = xk.transpose()
+    
+    #Initialize Matrices
+    P = np.array(config['kalman_filter_acceleration']['P'])
+    A = np.array(config['kalman_filter_acceleration']['A'])
+    Q = np.array(config['kalman_filter_acceleration']['Q'])
+    C = np.array(config['kalman_filter_acceleration']['C'])
+
+    for i in range (1, len(zk)): # Loop through all time steps
         
-        Y = zk[i:i+1,:].transpose() - C @ xk[:,i:i+1]
-        xk[:,i:i+1] = xk[:,i:i+1] + K @ Y
-        P = (np.eye(4) - K @ C) @ P
+        # Predict Step
+        xk[:,i:i+1] = A @ xk[:,i-1:i]
+        P = A @ P @ A.transpose() + Q
+        
+        #Measurement Update
+        K = P @ C.transpose() @ np.linalg.inv(C @ P @ C.transpose() + R) # Kalman Gain
+        xk[:,i:i+1] = xk[:,i:i+1] + K @ (zk[i:i+1,:].transpose() - C @ xk[:,i:i+1])
+        
+        P = P - K @ C @ P
+    
+    xk = xk.transpose()
+    
+    return xk
+
+def extended_kalman_filter(zk, config, initial_position, R):
+    
+    #Initialize state vector with initial position
+    xk = np.zeros((4,len(zk))).transpose()
+    xk[0] = [initial_position[0], 0, initial_position[1], 0]
+    xk = xk.transpose()
+    
+    #Initialize Matrices
+    P = np.array(config['kalman_filter']['P'])
+    A = np.array(config['kalman_filter']['A'])
+    Q = np.array(config['kalman_filter']['Q'])
+    C = np.array(config['kalman_filter']['C'])
+
+    for i in range (1, len(zk)): # Loop through all time steps
+        
+        # Predict Step
+        xk[:,i:i+1] = A @ xk[:,i-1:i]
+        P = A @ P @ A.transpose() + Q
+        
+        #Measurement Update
+        K = P @ C.transpose() @ np.linalg.inv(C @ P @ C.transpose() + R) # Kalman Gain
+        xk[:,i:i+1] = xk[:,i:i+1] + K @ (zk[i:i+1,:].transpose() - C @ xk[:,i:i+1])
+
+        P = P - K @ C @ P
     
     xk = xk.transpose()
     

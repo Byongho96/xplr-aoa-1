@@ -39,7 +39,7 @@ def run(case):
 
         # Interpolate
         def interpolate_position(row):
-            valid_gt = gt_df[gt_df['StartTime'] > row['TimeStamp']].iloc[0] # Get the last valid ground truth row
+            valid_gt = gt_df[gt_df['StartTime'] >= row['TimeStamp']].iloc[0] # Get the last valid ground truth row
             time_elapsed = (row['TimeStamp'] - valid_gt['StartTime']) / 1000
             new_x = valid_gt['Xcoord'] + valid_gt['Vx'] * time_elapsed * 100  # Convert m → cm
             new_y = valid_gt['Ycoord'] + valid_gt['Vy'] * time_elapsed * 100
@@ -47,7 +47,7 @@ def run(case):
         
         beacons_df[['Xcoord', 'Ycoord']] = beacons_df.apply(interpolate_position, axis=1)
 
-        # IDK
+        # IDK : They group the data within delta_T seconds
         Tdisc = config['kalman_filter']['delta_T']  # Discretization time in seconds
         beacons_df['InitialTime'] = ((beacons_df['TimeStamp'] - initial_time) / 1000 / Tdisc).astype(int)
 
@@ -71,7 +71,7 @@ def run(case):
     all_errors_ARFL = []
     mean_errors_ARFL = []
     
-    for run in range(1, 5):
+    for run in range(1, 2):
         print(f'Executing RUN {run}')
 
         mean_data = {}
@@ -89,8 +89,8 @@ def run(case):
                 (coordinates[2] - ref_coordinates[2]) ** 2
             )
 
-            # Obtain the mean data for each position (discretized time)
-            mean_data[anchor_id] = anchor_beacons.groupby('InitialTime').agg({
+            # Obtain the mean data for each position (discretized time in delta_T)
+            anchor_mean_data = anchor_beacons.groupby('InitialTime').agg({
                 'Xcoord': 'mean',
                 'Ycoord': 'mean',
                 'Distance': 'mean',
@@ -100,80 +100,81 @@ def run(case):
             }).reset_index()
 
             # Calculate additional columns
-            mean_data[anchor_id]['RSSI'] = 10 * np.log10(mean_data[anchor_id]['RSSILin']) + 30
-            mean_data[anchor_id]['InitialTime'] = mean_data[anchor_id]['InitialTime'] * config['kalman_filter']['delta_T']  # Adjust InitialTime to represent the time in seconds
+            anchor_mean_data['RSSI'] = 10 * np.log10(anchor_mean_data['RSSILin']) + 30
+            anchor_mean_data['InitialTime'] = anchor_mean_data['InitialTime'] * config['kalman_filter']['delta_T']  # Adjust InitialTime to represent the time in seconds
 
-            d0 = mean_data[anchor_id].loc[mean_data[anchor_id].index[0], 'Distance']
-            rssi_d0 = mean_data[anchor_id].loc[mean_data[anchor_id].index[0], 'RSSI']
-            mean_data[anchor_id]['Dest_RSSI'] = d0 * np.power(10, ((rssi_d0 - mean_data[anchor_id]["RSSI"]) / (10 * alpha)))
+            d0 = anchor_mean_data.loc[anchor_mean_data.index[0], 'Distance']
+            rssi_d0 = anchor_mean_data.loc[anchor_mean_data.index[0], 'RSSI']
+            anchor_mean_data['Dest_RSSI'] = d0 * np.power(10, ((rssi_d0 - anchor_mean_data["RSSI"]) / (10 * alpha)))
+
+            # Store the mean values for each anchor
+            mean_data[anchor_id] =anchor_mean_data
 
 
-        # Verify the length of DataFrames and interpolate data if measurements are missing
-        mean_data[6501], mean_data[6502], mean_data[6503], mean_data[6504] = dP.df_correct_sizes(mean_data[6501], mean_data[6502], mean_data[6503], mean_data[6504])
-      
-        '''Here start the algorithms to estimate position'''
+        # Set all the data to the same size...
+        total_row = max([len(df) for df in mean_data.values()])
         
-        '''Estimate position by Multilateration'''
+        for i, df in enumerate(df for df in mean_data.values()):
+            if len(df) < total_row:
+                rows_to_add = total_row - len(df)
+                df = pd.concat([df, pd.DataFrame(np.nan, index=range(rows_to_add), columns=df.columns)], ignore_index=True)
+            df.interpolate(method='linear', inplace=True)
+    
+        # Simulate with different methods
         
-        # Calculate positioning with Multilateration function
+        '''
+        1. Estimate position by Multilateration(RSSI)
+        '''
         df_posMLT = fP.multilateration(config, mean_data)
-
-        # Convert to float
         df_posMLT['Xest'] = df_posMLT['Xest'].astype(float) 
         df_posMLT['Yest'] = df_posMLT['Yest'].astype(float)
-        
-        # Calculate the error
+
         mean_error_posMLT, df_all_error_posMLT= dP.distance_error(df_posMLT)
-        
-        # Append the DataFrame of errors to the list - used later to get the CDF
+
         all_errors_MLT.append(df_all_error_posMLT)
-        
-        # Append the average errors to the list
         mean_errors_MLT.append(mean_error_posMLT)
         
-        print(all_errors_MLT)
-        print(mean_errors_MLT)
-        print(1)
+        print(f'Mean Err MLT(RSSI): {mean_errors_MLT}')
         
-        #############################################################################################################3
+     
+        '''
+        2. Estimate position by AoA + RSSI (Trigonometry)
+        '''
+        df_posTrigonometry = fP.trigonometry(mean_data, config, df_posMLT)
+        df_posTrigonometry['Xest'] = df_posTrigonometry['Xest'].astype(float) 
+        df_posTrigonometry['Yest'] = df_posTrigonometry['Yest'].astype(float)
         
-        # '''Estimate position by AoA+RSSI (Trigonometry)'''
-        # df_posTrigonometry = fP.trigonometry(mean_data, config, df_posMLT)
+        mean_error_posTrigonometry, df_all_error_posTrigonometry= dP.distance_error(df_posTrigonometry)
         
-        # #Calculate the error
-        # mean_error_posTrigonometry, df_all_error_posTrigonometry= dP.distance_error(df_posTrigonometry)
+        all_errors_Trigonometry.append(df_all_error_posTrigonometry)
+        mean_errors_Trigonometry.append(mean_error_posTrigonometry)
         
-        # # Append the DataFrame of errors to the list - used later to get the CDF
-        # all_errors_Trigonometry.append(df_all_error_posTrigonometry)
-        
-        #  # Append the average errors to the list
-        # mean_errors_Trigonometry.append(mean_error_posTrigonometry)
-        
-        # ################################################################################################################
-        
-        # '''Estimate position by AoA-only (Triangulation)'''
-        
-        # df_posTriangulation = fP.triangulation(mean_data, config)
-        
-        # #Convert to float
-        # df_posTriangulation['Xest'] = df_posTriangulation['Xest'].astype(float) 
-        # df_posTriangulation['Yest'] = df_posTriangulation['Yest'].astype(float)
-        
-        # #Calculate the error
-        # mean_error_posTriangulation, df_all_error_posTriangulation= dP.distance_error(df_posTriangulation)
-        
-        # # Append the DataFrame of errors to the list - used later to get the CDF
-        # all_errors_Triangulation.append(df_all_error_posTriangulation)
-        
-        # # Append the average errors to the list
-        # mean_errors_Triangulation.append(mean_error_posTriangulation)
-        
-        # ##################################################################################################################3
-        # '''Estime positions using the results from previously methods with Kalman Filter'''
+        print(f'Mean Err Trigonometry(AoA + RSSI): {mean_errors_Trigonometry}')
+
+ 
+        '''
+        3. Estimate position by AoA-only (Triangulation)
+        '''
+        df_posTriangulation = fP.triangulation(mean_data, config)
+        df_posTriangulation['Xest'] = df_posTriangulation['Xest'].astype(float)
+        df_posTriangulation['Yest'] = df_posTriangulation['Yest'].astype(float)
+
+        mean_error_posTriangulation, df_all_error_posTriangulation= dP.distance_error(df_posTriangulation)
+
+        all_errors_Triangulation.append(df_all_error_posTriangulation)
+        mean_errors_Triangulation.append(mean_error_posTriangulation)
+
+        print(f'Mean Err Triangulation(AoA): {mean_errors_Triangulation}')
+
+        # Announce re-use of the same data
+        zk_posMLT = dP.create_measurement_matrix(df_posMLT)
+        zk_posTrigonometry = dP.create_measurement_matrix(df_posTrigonometry)
+        zk_posTriangulation = dP.create_measurement_matrix(df_posTriangulation)
+
+        # '''
+        # 4. Estimate positions using the results from previously methods with Kalman Filter
+        # '''
         # # Create measurements matrices using the helper function
-        # zk_posMLT = dP.create_measurement_matrix(df_posMLT)
-        # zk_posTrigonometry = dP.create_measurement_matrix(df_posTrigonometry)
-        # zk_posTriangulation = dP.create_measurement_matrix(df_posTriangulation)
         
         # # Positioning obtained with multilateration + Kalman filter
         # xk_MLT = fP.kalman_filter(zk_posMLT, config, initial_position, config['kalman_filter']['R_MLT'])
@@ -212,27 +213,54 @@ def run(case):
         
         # # Append the average errors to the list
         # mean_errors_Trigonometry_KF.append(mean_error_posTrigonometry_KF)
+
+        """
+        6. Positioning obtained with Triangulation + Kalman filter
+        """
+        xk_Triangulation = fP.kalman_filter(zk_posTriangulation, config, initial_position, config['kalman_filter']['R_AoA_only'])
+        df_posTriangulation_KF = pd.DataFrame(columns=['Xreal', 'Yreal', 'Xest', 'Yest']) #DF to save results
+        df_posTriangulation_KF['Xreal'] = df_posTriangulation['Xreal']
+        df_posTriangulation_KF['Yreal'] = df_posTriangulation['Yreal']
+        df_posTriangulation_KF['Xest'] = xk_Triangulation[:,0]
+        df_posTriangulation_KF['Yest'] = xk_Triangulation[:,2]
         
-        # #############################################################################################################################
-        # """
-        # Positioning obtained with Triangulation + Kalman filter
-        # """
-        # xk_Triangulation = fP.kalman_filter(zk_posTriangulation, config, initial_position, config['kalman_filter']['R_AoA_only'])
+        mean_error_posTriangulation_KF, df_all_error_posTriangulation_KF = dP.distance_error(df_posTriangulation_KF)
+        
+        all_errors_Triangulation_KF.append(df_all_error_posTriangulation_KF)
+        mean_errors_Triangulation_KF.append(mean_error_posTriangulation_KF)
+
+        print(f'Mean Err Triangulation(AoA) + KF: {mean_errors_Triangulation_KF}')
+
+        """
+        6-1. Positioning obtained with Triangulation + Kalman filter acceleration
+        """
+        xk_Triangulation_accel = fP.kalman_filter_acceleration(zk_posTriangulation, config, initial_position, config['kalman_filter_acceleration']['R'])
+        df_posTriangulation_KF_accel = pd.DataFrame(columns=['Xreal', 'Yreal', 'Xest', 'Yest']) #DF to save results
+        df_posTriangulation_KF_accel['Xreal'] = df_posTriangulation['Xreal']
+        df_posTriangulation_KF_accel['Yreal'] = df_posTriangulation['Yreal']
+        df_posTriangulation_KF_accel['Xest'] = xk_Triangulation_accel[:,0]
+        df_posTriangulation_KF_accel['Yest'] = xk_Triangulation_accel[:,3]
+        
+        mean_error_posTriangulation_KF_accel, df_all_error_posTriangulation_KF_accel = dP.distance_error(df_posTriangulation_KF_accel)
+
+        print(f'Mean Err Triangulation(AoA) + KF_accel: {mean_error_posTriangulation_KF_accel}')
+
+
+        """
+        7-2. Positioning obtained with Triangulation + Extended Kalman filter
+        """
+        # xk_Triangulation = fP.kalman_filter_acceleration(zk_posTriangulation, config, initial_position, config['kalman_filter_acceleration']['R'])
         # df_posTriangulation_KF = pd.DataFrame(columns=['Xreal', 'Yreal', 'Xest', 'Yest']) #DF to save results
         # df_posTriangulation_KF['Xreal'] = df_posTriangulation['Xreal']
         # df_posTriangulation_KF['Yreal'] = df_posTriangulation['Yreal']
         # df_posTriangulation_KF['Xest'] = xk_Triangulation[:,0]
         # df_posTriangulation_KF['Yest'] = xk_Triangulation[:,2]
         
-        # #Calculate the error
-        # mean_error_posTriangulation_KF, df_all_error_posTriangulation_KF = dP.distance_error(df_posTriangulation_KF)
-        
-        # # Append the DataFrame of errors to the list - used later to get the CDF
-        # all_errors_Triangulation_KF.append(df_all_error_posTriangulation_KF)
-        
-        # # Append the average errors to the list
-        # mean_errors_Triangulation_KF.append(mean_error_posTriangulation_KF)
-        
+        # mean_error_posTriangulation_KF_accel, df_all_error_posTriangulation_KF_accel = dP.distance_error(df_posTriangulation_KF)
+
+        # print(f'Mean Err Triangulation(AoA) + KF: {mean_error_posTriangulation_KF_accel}')
+
+
         # ########################################################################################################################
         # '''Estimate position using ARFL fusion with AoA+RSSI (Trigonometry) and AoA-only (Triangulation)'''
         # xk_ARFL = fP.ARFL_fusion(zk_posTrigonometry, zk_posTriangulation, config['kalman_filter']['R_AoA_RSSI'] , config['kalman_filter']['R_AoA_only'], initial_position, config)
