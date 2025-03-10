@@ -283,49 +283,42 @@ def run(case):
         
         #######################################################################################################
         '''Plot real and estimated positions'''
-        # plt.figure()
-        # plt.ylim(-2.00, 8.00)
-        # plt.xlim(-2.00,14.00)
-        # plt.plot([0,12.00,12.00,0,0],[0,0,6.00,6.00,0],'k')
-        # # Show the major grid and style it slightly.
-        # plt.grid(which='major', color='#DDDDDD', linewidth=1)
-        # # Show the minor grid as well. Style it in very light gray as a thin,
-        # # dotted line.
-        # plt.grid(which='minor', color='#EEEEEE', linestyle=':', linewidth=0.8)
-        # # Make the minor ticks and gridlines show.
-        # plt.minorticks_on()
-        # #plot anchors
-        # plt.plot([0,6.00,12.00,6.00],[3.00,0,3.00,6.00],'ro', markersize=8)
-        # plt.text(-1.30,2.85,'6501')
-        # plt.text(5.50,-0.50,'6502')
-        # plt.text(12.25,2.85,'6503')
-        # plt.text(5.50,6.20,'6504')
-        # # plt.text(plot_start_label[0],plot_start_label[1],'Start')
-        # # plt.text(plot_stop_label[0],plot_stop_label[1],'Stop')
-        # plt.xlabel('x [m]', loc='right', fontsize = 12)
-        # plt.ylabel('y [m]', loc='top', fontsize = 12)
+        plt.figure()
+        plt.title(f'Case: {case} - Run: {run} -- Position Estimation')
+
+        plt.xlim(-2.00,14.00)
+        plt.xlabel('x [m]', loc='right', fontsize = 12)
+
+        plt.ylim(-2.00, 8.00)
+        plt.ylabel('y [m]', loc='top', fontsize = 12)
+
+        plt.plot([0,12.00,12.00,0,0],[0,0,6.00,6.00,0],'k', label='Boundary')
+        plt.grid(which='major', color='#DDDDDD', linewidth=1) # major grid
+        plt.grid(which='minor', color='#EEEEEE', linestyle=':', linewidth=0.8) # minor grid
+        plt.minorticks_on() # enable minor ticks
+
+        # mark anchors
+        plt.plot([0,6.00,12.00,6.00],[3.00,0,3.00,6.00],'ro', markersize=8, label='Anchors')
+        plt.text(-1.30,2.85,'6501')
+        plt.text(5.50,-0.50,'6502')
+        plt.text(12.25,2.85,'6503')
+        plt.text(5.50,6.20,'6504')
         
-        # for i in range (0,len(df_posARFL),3):
-        #     plt.plot(df_posARFL.iloc[i,0]/100,df_posARFL.iloc[i,1]/100, 'b*') # real trajectory
-        #     plt.plot(df_posTriangulation.iloc[i,2]/100,df_posTriangulation.iloc[i,3]/100, 'c.') #position by triangulation
-        #     plt.plot(df_posTriangulation_KF.iloc[i,2]/100,df_posTriangulation_KF.iloc[i,3]/100, 'm.') #position by triangulation+KF
-        #     plt.plot(df_posTrigonometry.iloc[i,2]/100,df_posTrigonometry.iloc[i,3]/100, 'y.') #position by trigonometry
-        #     plt.plot(df_posTrigonometry_KF.iloc[i,2]/100,df_posTrigonometry_KF.iloc[i,3]/100, 'k.') #position by trigonometry+KF
-        #     plt.plot(df_posARFL.iloc[i,2]/100,df_posARFL.iloc[i,3]/100, 'g.') #position by ARFL
-            
-        #     # distance errors lines
-        #     plt.plot([df_posARFL.iloc[i,0]/100,df_posTriangulation_KF.iloc[i,2]/100], [df_posARFL.iloc[i,1]/100,df_posTriangulation_KF.iloc[i,3]/100],'m', linewidth=0.2) # lines real to triangulation+KF
-        #     plt.plot([df_posARFL.iloc[i,0]/100,df_posTriangulation.iloc[i,2]/100], [df_posARFL.iloc[i,1]/100,df_posTriangulation.iloc[i,3]/100],'c', linewidth=0.2) # lines real to triangulation
-        #     plt.plot([df_posARFL.iloc[i,0]/100,df_posTrigonometry_KF.iloc[i,2]/100], [df_posARFL.iloc[i,1]/100,df_posTrigonometry_KF.iloc[i,3]/100],'k', linewidth=0.2) # lines real to trigonometry
-        #     plt.plot([df_posARFL.iloc[i,0]/100,df_posTrigonometry.iloc[i,2]/100], [df_posARFL.iloc[i,1]/100,df_posTrigonometry.iloc[i,3]/100],'y', linewidth=0.2) # lines real to trigonometry+KF
-        #     plt.plot([df_posARFL.iloc[i,0]/100,df_posARFL.iloc[i,2]/100], [df_posARFL.iloc[i,1]/100,df_posARFL.iloc[i,3]/100],'g', linewidth=0.2) # lines real to ARFL
+        for i in range (0,len(df_posMLT),3):
+            plt.plot(df_posMLT.loc[i,'Xreal']/100, df_posMLT.loc[i,'Yreal']/100, 'b*', label='Real Trajectory')
+
+            plt.plot(df_posTrigonometry.loc[i,'Xest']/100,df_posTrigonometry.loc[i,'Yest']/100, 'y.', label='RSSI') 
+            plt.plot(df_posTriangulation.loc[i,'Xest']/100,df_posTriangulation.loc[i,'Yest']/100, 'c.', label='AoA') 
+            plt.plot(df_posTriangulation_KF.loc[i,'Xest']/100,df_posTriangulation_KF.loc[i,'Yest']/100, 'm.', label='AoA+KF') 
+
+            plt.plot([df_posMLT.loc[i,'Xreal']/100,df_posTrigonometry.loc[i,'Xest']/100], [df_posMLT.loc[i,'Yreal']/100,df_posTrigonometry.loc[i,'Yest']/100],'y', linewidth=0.2)
+            plt.plot([df_posMLT.loc[i,'Xreal']/100,df_posTriangulation.loc[i,'Xest']/100], [df_posMLT.loc[i,'Yreal']/100,df_posTriangulation.loc[i,'Yest']/100],'c', linewidth=0.2)
+            plt.plot([df_posMLT.loc[i,'Xreal']/100,df_posTriangulation_KF.loc[i,'Xest']/100], [df_posMLT.loc[i,'Yreal']/100,df_posTriangulation_KF.loc[i,'Yest']/100],'m', linewidth=0.2) 
+
         
-        # plt.title(f'Case: {case} - Run: {run} -- Position Estimation')
-        # plt.legend(['Area','Anchors','Real Trajectory' , 'AoA-only', 'AoA-only+KF', 'AoA+RSSI','AoA+RSSI+KF', 'ARFL'],loc=1, fontsize='small')
-        # plt.tick_params(axis='x', labelsize=12)
-        # plt.tick_params(axis='y', labelsize=12)
-        # #plt.legend(['Area','Âncoras','Trajetória Real'],loc=1, fontsize='small')
-        # plt.show(block=True)
+        plt.legend(['Area', 'Anchors', 'Real Trajectory', 'RSSI', 'AoA', 'AoA+KF'],loc=1, fontsize='small')
+
+        plt.show(block=True)
         
         
     ###############################################################################################################################
