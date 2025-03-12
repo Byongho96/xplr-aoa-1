@@ -1,2 +1,2 @@
-port: 'COM7'
+port: '/dev/ttyUSB0'
 baudrate: 115200
