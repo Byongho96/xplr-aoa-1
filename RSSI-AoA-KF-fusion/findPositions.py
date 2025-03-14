@@ -20,28 +20,29 @@ def multilateration(config, mean_data):
         }   
         
     # Distance between anchors:
-    d12 = np.sqrt((pow(anchors_coordinates[6501]['x']-anchors_coordinates[6502]['x'],2))+(pow(anchors_coordinates[6501]['y']-anchors_coordinates[6502]['y'],2)))
-    d13 = np.sqrt((pow(anchors_coordinates[6501]['x']-anchors_coordinates[6503]['x'],2))+(pow(anchors_coordinates[6501]['y']-anchors_coordinates[6503]['y'],2)))
-    d14 = np.sqrt((pow(anchors_coordinates[6501]['x']-anchors_coordinates[6504]['x'],2))+(pow(anchors_coordinates[6501]['y']-anchors_coordinates[6504]['y'],2)))
-    d23 = np.sqrt((pow(anchors_coordinates[6502]['x']-anchors_coordinates[6503]['x'],2))+(pow(anchors_coordinates[6502]['y']-anchors_coordinates[6503]['y'],2)))
-    d24 = np.sqrt((pow(anchors_coordinates[6502]['x']-anchors_coordinates[6504]['x'],2))+(pow(anchors_coordinates[6502]['y']-anchors_coordinates[6504]['y'],2)))
-    d34 = np.sqrt((pow(anchors_coordinates[6503]['x']-anchors_coordinates[6504]['x'],2))+(pow(anchors_coordinates[6503]['y']-anchors_coordinates[6504]['y'],2)))
+    d12 = np.sqrt(pow(anchors_coordinates[6501]['x'] - anchors_coordinates[6502]['x'], 2) + pow(anchors_coordinates[6501]['y'] - anchors_coordinates[6502]['y'], 2))
+    d13 = np.sqrt(pow(anchors_coordinates[6501]['x'] - anchors_coordinates[6503]['x'], 2) + pow(anchors_coordinates[6501]['y'] - anchors_coordinates[6503]['y'], 2))
+    d14 = np.sqrt(pow(anchors_coordinates[6501]['x'] - anchors_coordinates[6504]['x'], 2) + pow(anchors_coordinates[6501]['y'] - anchors_coordinates[6504]['y'], 2))
+    d23 = np.sqrt(pow(anchors_coordinates[6502]['x'] - anchors_coordinates[6503]['x'], 2) + pow(anchors_coordinates[6502]['y'] - anchors_coordinates[6503]['y'], 2))
+    d24 = np.sqrt(pow(anchors_coordinates[6502]['x'] - anchors_coordinates[6504]['x'], 2) + pow(anchors_coordinates[6502]['y'] - anchors_coordinates[6504]['y'], 2))
+    d34 = np.sqrt(pow(anchors_coordinates[6503]['x'] - anchors_coordinates[6504]['x'], 2) + pow(anchors_coordinates[6503]['y'] - anchors_coordinates[6504]['y'], 2))
 
-    df_MLT = pd.DataFrame(columns=['Xreal', 'Yreal', 'Xest', 'Yest']) #Dataframe to save the results
+    df_MLT = pd.DataFrame(columns=['Xreal', 'Yreal', 'Xest', 'Yest']) # Dataframe to save the results
     
-    for i in range (len(mean_data[6501])): #loop through measurements
+    for i in range (len(mean_data[6501])): # Loop through measurements
        
-        #Distance with RSSI between anchors and tag
-        d1 = mean_data[6501].loc[i,'Dest_RSSI']
-        d2 = mean_data[6502].loc[i,'Dest_RSSI']
-        d3 = mean_data[6503].loc[i,'Dest_RSSI']
-        d4 = mean_data[6504].loc[i,'Dest_RSSI']
+        # Distance with RSSI between anchors and tag
+        d1 = mean_data[6501].loc[i, 'Dest_RSSI']
+        d2 = mean_data[6502].loc[i, 'Dest_RSSI']
+        d3 = mean_data[6503].loc[i, 'Dest_RSSI']
+        d4 = mean_data[6504].loc[i, 'Dest_RSSI']
         
-        
-        '''Check if the radii of the circles formed by the distance and position of the anchor are eccentric
+        '''
+        Check if the radii of the circles formed by the distance and position of the anchor are eccentric
         or do not touch other circles. If so, make a correction by decreasing or increasing the distance.
-        A loop is implemented to ensure that when a correction is made, other radii are not affected'''
-        for k in range(0,100):
+        A loop is implemented to ensure that when a correction is made, other radii are not affected
+        '''
+        for _ in range(0,100):
             
             d2,d3 = dP.adjust_circle_eccentric(d2,d3,d23)
             d2,d4 = dP.adjust_circle_eccentric(d2,d4,d24)
@@ -57,7 +58,7 @@ def multilateration(config, mean_data):
             d1,d3 = dP.adjust_separate_circle_radii(d1,d3,d13)
             d1,d4 = dP.adjust_separate_circle_radii(d1,d4,d14)
             
-        # Multilateration equations
+        # Multilateration equations : (x - x1)^2 + (y - y1)^2 = d1^2
         b1 = -pow(anchors_coordinates[6501]['x'],2)-pow(anchors_coordinates[6501]['y'],2)+pow(anchors_coordinates[6504]['x'],2)+pow(anchors_coordinates[6504]['y'],2)+pow(d1,2)-pow(d4,2)
         b2 = -pow(anchors_coordinates[6502]['x'],2)-pow(anchors_coordinates[6502]['y'],2)+pow(anchors_coordinates[6504]['x'],2)+pow(anchors_coordinates[6504]['y'],2)+pow(d2,2)-pow(d4,2)
         b3 = -pow(anchors_coordinates[6503]['x'],2)-pow(anchors_coordinates[6503]['y'],2)+pow(anchors_coordinates[6504]['x'],2)+pow(anchors_coordinates[6504]['y'],2)+pow(d3,2)-pow(d4,2)
@@ -69,12 +70,16 @@ def multilateration(config, mean_data):
         m31 = 2*(-anchors_coordinates[6503]['x']+anchors_coordinates[6504]['x'])
         m32 = 2*(-anchors_coordinates[6503]['y']+anchors_coordinates[6504]['y'])
         
-        B = np.array([[b1],
+        B = np.array([
+            [b1],
             [b2],
-            [b3]])
-        M = np.array([[m11, m12],
+            [b3]
+            ])
+        M = np.array([
+            [m11, m12],
             [m21, m22],
-            [m31, m32]])
+            [m31, m32]
+            ])
         
         # Perform multilateration with LS
         p = (np.linalg.pinv(M.transpose() @ M)) @ M.transpose() @ B 
@@ -119,17 +124,17 @@ def trigonometry(mean_data, config, df_posMLT):
 
         # iven the orientation of each anchor, each calculation requires a different equation, as each must be determined with respect to a common reference axis.
         if anchor_id == 6501:
-            Xest = abs(-anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90-mean_data[anchor_id]['AoA_el']))))
-            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90-mean_data[anchor_id]['AoA_el']))))
+            Xest = abs(-anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90-mean_data[anchor_id]['AoA_az']))))
+            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90-mean_data[anchor_id]['AoA_az']))))
         elif anchor_id == 6502:
-            Xest = abs(anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90-mean_data[anchor_id]['AoA_el']))))
-            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90-mean_data[anchor_id]['AoA_el']))))
+            Xest = abs(anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90-mean_data[anchor_id]['AoA_az']))))
+            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90-mean_data[anchor_id]['AoA_az']))))
         elif anchor_id == 6503:
-            Xest = abs(-anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90+mean_data[anchor_id]['AoA_el']))))
-            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90+mean_data[anchor_id]['AoA_el']))))
+            Xest = abs(-anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90+mean_data[anchor_id]['AoA_az']))))
+            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90+mean_data[anchor_id]['AoA_az']))))
         else:
-            Xest = abs(anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90+mean_data[anchor_id]['AoA_el']))))
-            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90+mean_data[anchor_id]['AoA_el']))))
+            Xest = abs(anchors_coordinates[anchor_id]['x']+mean_data[anchor_id]['Dest_MLT']*np.cos((np.deg2rad(90+mean_data[anchor_id]['AoA_az']))))
+            Yest = abs(anchors_coordinates[anchor_id]['y']-mean_data[anchor_id]['Dest_MLT']*np.sin((np.deg2rad(90+mean_data[anchor_id]['AoA_az']))))
         
         # Store the Xest and Yest values for each anchor
         posTrigonometry[anchor_id]['x'].append(Xest)

@@ -199,32 +199,30 @@ def df_correct_sizes(df6501, df6502, df6503, df6504):
     return dfs[0], dfs[1], dfs[2], dfs[3]
 
 # Function to correct the circles radius
-def adjust_circle_eccentric(radius1, radius2, distance_between_anchors):
+def adjust_circle_eccentric(d1, d2, d12):
     
-    if radius1>radius2: 
-        while int(radius1)>int((distance_between_anchors+radius2)): # While do not intersect
-            radius1 = radius1-(radius1/(radius2+radius1))*(radius1-distance_between_anchors-radius2) # Reduce radius 1
-            radius2 = radius2+(radius2/(radius2+radius1))*(radius1-distance_between_anchors-radius2) # Increase radius 2
-            radius1 = radius1*0.9 #Scalling Factor
-            radius2 = radius2*1.1 #Scalling Factor
+    if d1 > d2 and d1 > d12 + d2: 
+        d1 = d1 - (d1 / (d2 + d1)) * ( d1 - d12 - d2) # Reduce radius 1
+        d2 = d2 + (d2 / (d2 + d1)) * ( d1 - d12 - d2) # Increase radius 2
+        d1 = d1*0.9 #Scalling Factor
+        d2 = d2*1.1 #Scalling Factor
             
-    elif radius1<radius2:
-        while int(radius2)>int((distance_between_anchors+radius1)): # While do not intersect
-            radius2 = radius2-(radius2/(radius2+radius1))*(radius2-distance_between_anchors-radius1) # Reduce radius 2
-            radius1 = radius1+(radius1/(radius2+radius1))*(radius2-distance_between_anchors-radius1) # Increase radius 1
-            radius1 = radius1*1.1 #Scalling Factor
-            radius2 = radius2*0.9 #Scalling Factor
+    elif d1 < d2 and d2 > d12 + d1:
+        d2 = d2 - (d2 / (d2 + d1)) * (d2 - d12 - d1) # Reduce radius 2
+        d1 = d1 + (d1 / (d2 + d1)) * (d2 - d12 - d1) # Increase radius 1
+        d1 = d1*1.1 #Scalling Factor
+        d2 = d2*0.9 #Scalling Factor
 
-    return radius1, radius2
+    return d1, d2
 
 # Function to correct the circles radius
 def adjust_separate_circle_radii(d1, d2, d12):
     
-    while int(d12)>int((d1+d2)): # While do not intersect
-        d1 = (d1/(d1+d2))*d12  # Increase radius 1
-        d2 = (d2/(d1+d2))*d12 # Increase radius 2
-        d1 = d1*1.1  #Scalling Factor
-        d2 = d2*1.1 #Scalling Factor
+    if d12 > d1 + d2:
+        d1 = (d1 / (d1+d2)) * d12  # Increase radius 1
+        d2 = (d2 / (d1+d2)) * d12 # Increase radius 2
+        d1 = d1 * 1.1
+        d2 = d2 * 1.1
 
     return d1, d2
 

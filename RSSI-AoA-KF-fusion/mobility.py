@@ -47,8 +47,8 @@ def run(case):
         
         beacons_df[['Xcoord', 'Ycoord']] = beacons_df.apply(interpolate_position, axis=1)
 
-        # IDK : They group the data within delta_T seconds
-        Tdisc = config['kalman_filter']['delta_T']  # Discretization time in seconds
+        # Group per delta_T seconds -> Take mean values for each time interval (Line 93)
+        Tdisc = config['kalman_filter']['delta_T'] 
         beacons_df['InitialTime'] = ((beacons_df['TimeStamp'] - initial_time) / 1000 / Tdisc).astype(int)
 
         beacons_df_by_run[f'run{run}'] = beacons_df
@@ -118,7 +118,7 @@ def run(case):
             if len(df) < total_row:
                 rows_to_add = total_row - len(df)
                 df = pd.concat([df, pd.DataFrame(np.nan, index=range(rows_to_add), columns=df.columns)], ignore_index=True)
-            df.interpolate(method='linear', inplace=True)
+            df.interpolate(method   ='linear', inplace=True)
     
         # Simulate with different methods
         
