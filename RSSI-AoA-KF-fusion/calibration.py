@@ -2,7 +2,6 @@ import yaml
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import data_processing as dp
 from scipy.optimize import minimize
 
 beacons_column_names = ["TimeStamp", "TagID", "1stP","AoA_az", "AoA_el", "2ndP", "Channel", "AnchorID"]
@@ -90,32 +89,43 @@ def run():
     # Plot the results
     fig_width = config['plot']['fig_size'][0]
     fig_height = config['plot']['fig_size'][1]
-    
+
+    # Create a 2x2 subplot layout  
     _fig, axes = plt.subplots(2, 2, figsize=(fig_width, fig_height))
 
-    for i, anchor_id in enumerate([6501, 6502, 6503, 6504]):   
-        row, col = divmod(i, 2)
+    # Define anchor IDs
+    anchor_ids = [6501, 6502, 6503, 6504]
+
+    # Iterate over each anchor and plot data
+    for i, anchor_id in enumerate(anchor_ids):
+        row, col = divmod(i, 2)  # Determine subplot position
         ax = axes[row, col]
 
-        # Set subplot properties
-        ax.set_title(f"RSSI x Distance - Anchor {id}", fontsize=14)
-        ax.set_xlabel("Distance [m]",fontsize=12)
+        # Retrieve relevant data for this anchor
+        beacon_data = beacons_df_by_anchor[anchor_id]
+        mean_data = mean_df_by_anchor[anchor_id]
+
+        # Extract and preprocess data for plotting
+        x_plot = beacon_data.loc[::60, 'Distance'].values / 100  # Convert distance to meters
+        y_plot = beacon_data.loc[::60, polarization_column].values  # RSSI values
+
+        # Sort mean data by distance for a proper model plot
+        mean_data_sorted = mean_data.sort_values(by=['Distance'], inplace=False)
+
+        # Plot data points
+        ax.plot(x_plot, y_plot, 'o', label="RSSI Measurements")
+        ax.plot(mean_data["Distance"] / 100, mean_data["RSSI"], 'r*', label="Mean RSSI")
+        ax.plot(mean_data_sorted["Distance"] / 100, mean_data_sorted["RSSIModel"], 'k', linewidth=3, label="RSSI Model")
+
+        # Set subplot labels and title
+        ax.set_title(f"RSSI vs Distance - Anchor {anchor_id}", fontsize=14)
+        ax.set_xlabel("Distance [m]", fontsize=12)
         ax.set_ylabel("RSSI [dBm]", fontsize=12)
-                    
-        # Plot RSSI measurements
-        x_plot = beacons_df_by_anchor[anchor_id].loc[::60, 'Distance'].values / 100  # Slicing every 60th value and dividing by 100 to transform in meters
-        y_plot = beacons_df_by_anchor[anchor_id].loc[::60, polarization_column].values  # Slicing every 60th value for RSSI
-        ax.plot(x_plot, y_plot,'o')
         
-        # Plot mean RSSI
-        ax.plot(mean_df_by_anchor[anchor_id]["Distance"]/100, mean_df_by_anchor[anchor_id]["RSSI"],'r*')
-        
-        # Plot RSSI model
-        mean_df_by_anchor[anchor_id].sort_values(by=['Distance'], inplace=True)
-        ax.plot(mean_df_by_anchor[anchor_id]["Distance"]/100, mean_df_by_anchor[anchor_id]["RSSIModel"],'k', linewidth=3)
-        
-        ax.legend(['RSSI Measurements', 'Mean RSSI', 'RSSI Model'],loc=1, fontsize=11)
+        # Add legend and grid
+        ax.legend(loc=1, fontsize=11)
         ax.grid()
 
+    # Adjust layout for better spacing
     plt.tight_layout()
     plt.show()
