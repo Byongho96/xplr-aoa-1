@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMU Sensor Data</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea, #42d2e6);
+            color: white;
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        p {
+            margin: 0;
+        }
+        .sensor-container {
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            width: 200px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        .sensor-data {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            justify-content: start;
+            font-size: 1.5rem;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        button, input {
+            padding: 12px 24px;
+            font-size: 1rem;
+            margin-top: 20px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        input {
+            width: 80px;
+            text-align: center;
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>IMU Sensor Data</h1>
+    <div class="sensor-container">
+        <div class="sensor-data">
+          <p>Yaw</p>
+          <p id="yaw">N/A</p>
+        </div>
+        <div class="sensor-data">
+          <p>Pitch</p>
+          <p id="pitch">N/A</p>
+        </div>
+        <div class="sensor-data">
+          <p>Roll</p>
+          <p id="roll">N/A</p>
+        </div>
+    </div>
+    <label for="interval">Interval (ms)&nbsp;
+      <input type="number" id="interval" value="500" min="100" step="100" onchange="updateInterval()">
+    </label>
+    <button onclick="requestPermission()">Allow Permission</button>
+
+    <script>
+    let interval = 500;
+        let yawValues = [], pitchValues = [], rollValues = [];
+        let updateTimer;
+
+        function requestPermission() {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            startUpdateLoop();
+                        } else {
+                            alert('권한이 거부되었습니다.');
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                window.addEventListener('deviceorientation', handleOrientation);
+                startUpdateLoop();
+            }
+        }
+
+        function handleOrientation(event) {
+            yawValues.push(event.alpha || 0);
+            pitchValues.push(event.beta || 0);
+            rollValues.push(event.gamma || 0);
+
+            if (yawValues.length > 10) yawValues.shift();
+            if (pitchValues.length > 10) pitchValues.shift();
+            if (rollValues.length > 10) rollValues.shift();
+        }
+
+        function getMovingAverage(values) {
+            return values.reduce((sum, val) => sum + val, 0) / values.length;
+        }
+
+        function updateDisplay() {
+            document.getElementById('yaw').textContent = `${getMovingAverage(yawValues).toFixed(2)}°`;
+            document.getElementById('pitch').textContent = `${getMovingAverage(pitchValues).toFixed(2)}°`;
+            document.getElementById('roll').textContent = `${getMovingAverage(rollValues).toFixed(2)}°`;
+        }
+
+        function startUpdateLoop() {
+            if (updateTimer) clearInterval(updateTimer);
+            updateTimer = setInterval(updateDisplay, interval);
+        }
+
+        function updateInterval() {
+            interval = parseInt(document.getElementById('interval').value, 10);
+            startUpdateLoop();
+        }
+    </script>
+</body>
+</html>
