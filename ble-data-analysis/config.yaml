@@ -1,0 +1,55 @@
+rectangular:
+  anchor1:
+    position: [300, 480, 138] # x, y, z in centimeters
+    orientation: [0, 0, 180] # roll, pitch, yaw in degrees
+  anchor2:
+    position: [600, 240, 138]
+    orientation: [0, 0, 270]
+  anchor3:
+    position: [300, 0, 138]
+    orientation: [0, 0, 0]
+  anchor4:
+    position: [0, 240, 138]
+    orientation: [0, 0, 90]
+
+diagonal:
+  anchor1:
+    position: [0, 480, 138]
+    orientation: [0, 0, 135]
+  anchor2:
+    position: [600, 480, 138]
+    orientation: [0, 0, 225]
+  anchor3:
+    position: [600, 0, 138]
+    orientation: [0, 0, 315]
+  anchor4:
+    position: [0, 0, 138]
+    orientation: [0, 0, 45]
+
+obstacle:
+  anchor1:
+    position: [0, 480, 138]
+    orientation: [0, 0, 135]
+  anchor2:
+    position: [600, 480, 138]
+    orientation: [0, 0, 225]
+  anchor3:
+    position: [600, 0, 138]
+    orientation: [0, 0, 315]
+  anchor4:
+    position: [0, 0, 138]
+    orientation: [0, 0, 45]
+
+floor:
+  anchor1:
+    position: [300, 480, 138]
+    orientation: [0, 0, 180]
+  anchor2:
+    position: [600, 0, 138]
+    orientation: [0, 0, 315]
+  anchor3:
+    position: [0, 0, 138]
+    orientation: [0, 0, 45]
+  anchor4:
+    position: [300, 240, 4]
+    orientation: [0, 0, 0]
